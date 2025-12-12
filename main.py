@@ -16,7 +16,7 @@ different task configurations (normal load, tight deadlines, overload).
 
 from task import Task
 from mixed_scheduler import select_and_schedule_mixed_tasks
-from bfs_schedule_mapping import build_weekly_schedule_from_blocks
+from time_slot_mapping import build_weekly_schedule_from_blocks
 from visualization import plot_linear_timeline, visualize_weekly_schedule
 
 
