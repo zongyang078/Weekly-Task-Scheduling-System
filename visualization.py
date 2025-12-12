@@ -2,6 +2,7 @@
 from typing import List, Tuple, Dict
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import ListedColormap, BoundaryNorm
 from task import Task
 
 
@@ -33,37 +34,62 @@ def visualize_weekly_schedule(
     total_days: int
 ) -> None:
     """
-    Display the weekly schedule using colored grids:
+    Display the weekly schedule using DISCRETE colored grids:
        y-axis = Day 1.. total_days
-       X-axis = Hour 0.. hours_per_day-1
-       Color = Different Tasks
+       x-axis = Hour 0.. hours_per_day-1
+       Color = Each task name gets exactly one color
+       Colorbar = Task names (categorical)
     """
     if total_days <= 0 or hours_per_day <= 0:
         print("Invalid total_days or hours_per_day.")
         return
 
-    grid = np.zeros((total_days, hours_per_day))
-    task_to_color: Dict[str, int] = {}
-    color_id = 1
-
+    # Collect all task names appearing in the schedule
+    all_names: List[str] = []
     for day in range(1, total_days + 1):
-        if day not in schedule:
-            continue
-        for hour, name in schedule[day]:
-            if name not in task_to_color:
-                task_to_color[name] = color_id
-                color_id += 1
-            grid[day - 1][hour] = task_to_color[name]
+        for hour, name in schedule.get(day, []):
+            all_names.append(name)
+
+    if not all_names:
+        print("Empty schedule. Nothing to visualize.")
+        return
+
+    # Stable order so mapping is consistent within this plot
+    unique_tasks = sorted(set(all_names))
+    task_to_id: Dict[str, int] = {name: i + 1 for i, name in enumerate(unique_tasks)}
+    K = len(unique_tasks)
+
+    # Build grid: 0 = empty, 1..K = task id
+    grid = np.zeros((total_days, hours_per_day), dtype=int)
+    for day in range(1, total_days + 1):
+        for hour, name in schedule.get(day, []):
+            if 0 <= hour < hours_per_day:
+                grid[day - 1, hour] = task_to_id[name]
+
+    # Build a discrete colormap: 0 -> white (empty), 1..K -> categorical colors
+    base = plt.get_cmap("tab20")
+    colors = ["white"] + [base((i % 20) / 20) for i in range(K)]
+    cmap = ListedColormap(colors)
+
+    # Ensure discrete mapping (no interpolation)
+    bounds = np.arange(-0.5, K + 1.5, 1)  # [-0.5, 0.5, 1.5, ..., K+0.5]
+    norm = BoundaryNorm(bounds, cmap.N)
 
     plt.figure(figsize=(10, 4))
-    plt.imshow(grid, cmap="tab20", aspect="auto")
+    plt.imshow(grid, cmap=cmap, norm=norm, aspect="auto", interpolation="nearest")
     plt.xlabel("Hour of day (0-based)")
     plt.ylabel("Day")
-    plt.title("Weekly Schedule (Color = Task)")
-    plt.colorbar(label="Task ID (color)")
+    plt.title("Weekly Schedule (One Color per Task)")
+
     plt.yticks(
         ticks=range(total_days),
         labels=[f"Day {d}" for d in range(1, total_days + 1)]
     )
+
+    # Colorbar with task names
+    cbar = plt.colorbar(ticks=np.arange(1, K + 1))
+    cbar.ax.set_yticklabels(unique_tasks)
+    cbar.set_label("Task (categorical)")
+
     plt.tight_layout()
     plt.show()
