@@ -113,11 +113,13 @@ The system successfully demonstrates that **global optimization + local heuristi
 
 
 ## Project Structure
-├── src/            # DP and Greedy scheduling logic
-├── data/           # Synthetic and real task datasets (JSON)
-├── figures/        # Gantt charts and heatmaps
-├── slides/         # Final presentation slides
-└── README.md
+README.md
+dp_task_selection.py
+main.py
+mixed_scheduler.py
+task.py
+time_slot_mapping.py
+visualization.py
 
 
 ## Tools & Technologies
